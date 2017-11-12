@@ -1,6 +1,8 @@
-angular.module('myApp').factory('HookConfig', HookConfig);
-function HookConfig(){
-    function HookConfig(){
+angular.module('anngular-hook-orm')
+    .factory('HookConfigTemplate', HookConfigTemplate);
+
+function HookConfigTemplate(){
+    function HookConfigTemplate(){
         var c = this;
         // What database adapter to use. Check in the adapters folder.
         c.adapter = 'PouchDBAdapter';
@@ -49,5 +51,5 @@ function HookConfig(){
             suffix: 'Repo'
         };
     }
-    return HookConfig;
+    return HookConfigTemplate;
 }

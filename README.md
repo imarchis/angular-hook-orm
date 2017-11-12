@@ -15,7 +15,7 @@ and provides a way to dynamically define "hooks" between them.
   - [Entities and Repositories](#entities-and-repositories)
   - [Query Builder](#query-builder)
 - [Usage](#usage)
-  - [Example](#usage-example)
+  - [Example](#example)
 - [Todo](#todo)
 
 

@@ -204,6 +204,19 @@ function EntitiesManager(JH) {
                 return entity;
             }
         };
+        em.model = function entity(entity, persist = false) {
+            let keys = Object.keys(entity);
+            if (keys.length === 0 || !JH.hasProp(entity, _e.table)) {
+                return entity;
+            } else {
+                entity = _revive(entity);
+                if (persist) {
+                    _clone(entity);
+                    em.persist(entity);
+                }
+                return entity;
+            }
+        };
         var _findPersisted = function _findPersisted(ids) {
             let picks = [];
             ids.map(function (id) {
@@ -634,6 +647,9 @@ function EntitiesManager(JH) {
                 return JH.promise(null);
             });
         };
+        em.truncate = function () {
+            return DBA.truncate();
+        }
     }
     return new EntitiesManager;
 }

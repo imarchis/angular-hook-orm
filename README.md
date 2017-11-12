@@ -229,6 +229,126 @@ angular-hook-orm is designed to offer solutions for interactions that reside bet
 
 ## Usage:
 
+### Example
+
+index.html:
+
+```html
+<!doctype html>
+<html ng-app="myApp">
+    <head>
+        <title>My App Demo</title>
+    </head>
+    <body data-ng-controller="MainCtrl">
+        <script src="http://ajax.googleapis.com/ajax/libs/angularjs/1.5.8/angular.min.js"></script>
+        <script src="js/app.js"></script>
+        <script src="js/factories/HookConfig.js"></script>
+        <script src="js/factories/entities.js"></script>
+        <script src="lib/pouchdb/pouchdb-6.2.0.min.js"></script>
+        <script src="lib/pouchdb/pouchdb.find.js"></script>
+        <script src="lib/angular-hook-orm/angular-hook-orm.js"></script>
+        <script src="lib/angular-hook-orm/adapters/PouchDBAdapter.js"></script>
+    </body>
+</html>
+```
+js/factories/HookConfig.js the same as above.
+
+js/factories/entities.js
+
+```javascript
+angular.module('myApp')
+    .factory('List', ['EntitiesManager',  List])
+    .factory('ListRepo', ['EntitiesManager', ListRepo]);
+
+function ListRepo(em){
+    function ListRepo(){
+        var lr = this;
+        lr.findAll = function() {
+            return em.allInTable('list');
+        };
+        lr.find = function(id) {
+            return em.find(id).then(function(r){
+                return r;
+            })
+        }
+    }
+    return ListRepo;
+}
+
+function List(em) {
+    function List(){
+        var l = this;
+        this.myT = 'list';
+        this.name = null;
+        this.created =  new Date();
+        this.modified = 0;
+
+        (function() {
+            l = em.model(l);
+            console.log('new List');
+        })();
+
+        this.setName = function (n) {
+            this.name = n;
+            this.setModified();
+        };
+
+        this.getName = function () {
+           return this.name;
+        };
+
+        this.setModified = function () {
+            this.modified = new Date();
+        };
+
+        this.getModified = function () {
+           return this.modified;
+        };
+
+    }
+    return List;
+}
+```
+
+js/app.js
+
+```javascript
+var myApp = angular.module('myApp', ['angular-hook-orm']);
+myApp.controller('MainCtrl', [ '$scope', 'EntitiesManager', 'List', function($scope, em, List) {
+    let repo = em.getRepository('list');
+    repo.findAll().then(function(r){
+        console.log(r);
+        if (r.length == 0) {
+            var list1 = new List;
+            var list2 = new List;
+            list1.setName('First List');
+            list2.setName('Second List');
+            em.persist(list1);
+            em.persist(list2);
+            list1.hook('bro', {
+                type: 'o2o',
+                strict: false,
+                mirror: true,
+                reverse: "dude"
+            });
+            list1.assign('bro', list2);
+            em.flush();
+        } else {
+            list1 = r[0];
+            list2 = r[1];
+        }
+
+        list1.grab('bro').then(function(b){
+            console.log('The bro is: '+ b.getName());
+            console.log(b);
+            list2.grab('dude').then(function(d){
+                console.log('The dude is: '+ d.getName());
+                console.log(d);
+            });
+        });
+    });
+}]);
+```
 
 ## Todo:
 - documentation

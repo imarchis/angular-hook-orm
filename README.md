@@ -264,7 +264,7 @@ To define a hook you need:
   };
   
   // if no cascades are defined the defaults will be used:
-  //  if the entity has "ownershp" of the hook (o2o, o2m)
+  //  if the entity has "ownership" of the hook (o2o, o2m)
       {
           onDelete: 'abandon',
           onDrop: 'forget',
@@ -274,8 +274,12 @@ To define a hook you need:
   //  else 
       'vanish'
 ```
-
-
+The Cascades values:
+- 'destroy' - remove both this entity and all related entities.
+- 'kill' - remove the related entities.
+- 'abandon' - remove this entity's hook, remove the reference to this entity from the related entities but keep their hook.
+- 'forget' - remove all references and hooks 
+- 'vanish' - remove the entity's reference
 
 
  ### Entities and Repositories

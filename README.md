@@ -200,7 +200,7 @@ A basic web application generally has the following layers:
 angular-hook-orm is designed to offer solutions for interactions that reside between the Service layer and the Storage layer: 
  - it offers exchangeable solutions for the Data Access Layer, in the form of "Adapters";
  - it has a built in "Entity Manager" which is a solution for the Data Mapper Layer;
- - it provides a means to easily define connections between the entities in the for of "Hooks";
+ - it provides a means to easily define connections between the entities in the form of "Hooks";
  - it offers guidance for designing the Entities and Repositories of your application;
  - it has (will have) a built in "Query Builder" to offer easier ways interract with the data of your application.  
 
@@ -235,7 +235,10 @@ angular-hook-orm is designed to offer solutions for interactions that reside bet
 - auto-increment ids?
 - annotations?
 
-- different & exchangeable data layers (Pouch - done[ + support attachments], Mongo, REST ...)
+- different & exchangeable data layers:
+  - PouchDB - done ( + support attachments),
+  - MongoDB,
+  - REST
 - Doc to Rel exports & imports (for RDBMS)
 
 

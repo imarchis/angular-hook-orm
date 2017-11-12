@@ -9,7 +9,11 @@ and provides a way to dynamically define "hooks" between them.
 - [Configuration](#configuration)
   - [Configuration Template](#configuration-template)
 - [Documentation](#documentation)
+  - [Adapters](#adapters)
+  - [Entity Manager](#entity-manager)
   - [Hooks](#hooks)
+  - [Entities and Repositories](#entities-and-repositories)
+  - [Query Builder](#query-builder)
 - [Usage](#usage)
   - [Example](#usage-example)
 - [Todo](#todo)
@@ -92,7 +96,12 @@ When you're done, your index file should look similar to this:
 ```
 
 ## Configuration:
- ### Configuration Template 
+
+angular-hook-orm seeks for a configuration factory called 'HookConfig' to get particular details need for the overall functionality, things like database adapters, special entities attributes, database connections, entities repository details, debugging level settings.
+
+An example of required details is written into the Configuration Template file.
+
+  ### Configuration Template 
 The Configuration Template file ('HookConfigTemplate.js') is where you define your configuration details, like this:
 
 ```javascript
@@ -150,11 +159,54 @@ function HookConfigTemplate(){
     }
     return HookConfigTemplate;
 }
-
-
 ```
 
 ## Documentation:
+
+A basic web application generally has the following layers:
+
+- Storage Layer
+
+    Storage - DB
+
+- Data Access Layer
+
+    Storage Wrapper
+
+    Transactions Adapter 
+
+- Data Mapper Layer
+
+    Persistence Manager 
+
+- Domain Objects Layer
+
+    Data Helpers - Repositories
+
+    Data Models - Entities
+
+- Service Layer
+
+    Services 
+
+    Controllers 
+
+- Presentation Layer
+
+    Views - Directives, Templates
+
+    UI/UX - Pages, CSS
+
+angular-hook-orm is designed to offer solutions for interactions that reside between the Service layer and the Storage layer: 
+ - it offers exchangeable solutions for the Data Access Layer, in the form of "Adapters";
+ - it has a built in "Entity Manager" which is a solution for the Data Mapper Layer;
+ - it provides a means to easily define connections between the entities in the for of "Hooks";
+ - it offers guidance for designing the Entities and Repositories of your application;
+ - it has (will have) a built in "Query Builder" to offer easier ways interract with the data of your application.  
+
+ ### Adapters
+ 
+ ### Entity Manager
 
  ### Hooks
 
@@ -162,6 +214,11 @@ function HookConfigTemplate(){
  but custom to each individual entity.
 
  Hooks are designed to offer a higher level of freedom for creating interactions between entities.
+
+ ### Entities and Repositories
+ 
+ ### Query Builder
+
 
 ## Usage:
 

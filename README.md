@@ -221,6 +221,62 @@ angular-hook-orm is designed to offer solutions for interactions that reside bet
  but custom to each individual entity.
 
  Hooks are designed to offer a higher level of freedom for creating interactions between entities.
+ 
+ As seen in the example, this is how you define and assign a hook:
+ ```javascript
+    ...
+    list1.hook('bro', {
+        type: 'o2o',
+        strict: false,
+        mirror: true,
+        reverse: "dude"
+    });
+    list1.assign('bro', list2);
+    em.flush();
+    ...
+```
+To define a hook you need:
+ - a hook name - anything that make sense to your app's logic ("bro" in the example above);
+ - details about the hook functionality;
+  ```javascript
+  {
+    // The type of relation o2o, o2m, m2o, m2m [one-to-one, one-to-many, many-to-one, many-to-many] 
+    type: 'o2o',
+    // just from one table?
+    strict: false,
+    // [optional] - required only when strict = true. 
+    // These combined allows only one type of entity to be used for this hook.
+    table: 'lists',
+    // add double reference? keep relationship details in both entities?
+    mirror: true,
+    // the name of the reversed hook. What should the other entity "call" this one?
+    reverse: "dude",
+    
+    // Cascade options. What should happen to the related entities? 
+    // [optional] - when this entity is deleted?
+    onDelete: 'destroy',
+    // [optional] - when the hook is removed?
+    onDrop: 'abandon',
+    // [optional] - when a different entity is assigned to this hook?
+    onChange: 'forget',
+    // [optional] - when the hook is emptied?
+    onEmpty: 'kill',    
+  };
+  
+  // if no cascades are defined the defaults will be used:
+  //  if the entity has "ownershp" of the hook (o2o, o2m)
+      {
+          onDelete: 'abandon',
+          onDrop: 'forget',
+          onChange: 'abandon',
+          onEmpty: 'abandon'
+      };
+  //  else 
+      'vanish'
+```
+
+
+
 
  ### Entities and Repositories
  

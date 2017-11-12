@@ -167,5 +167,19 @@ function HookConfigTemplate(){
 
 
 ## Todo:
+- documentation
+- errors
+- logger
+- tests
+- hook query builder
+
+- standard query builder?
+- qb with aliases ?
+- auto-increment ids?
+- annotations?
+
+- different & exchangeable data layers (Pouch - done[ + support attachments], Mongo, REST ...)
+- Doc to Rel exports & imports (for RDBMS)
+
 
 

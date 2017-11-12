@@ -1,7 +1,7 @@
 angular-hook-orm
 =====================
-An Angular ORM wrapper that allows you to use Angular factories as entities,
-and provides a way to dynamically define "hooks" between them.
+A client-side ORM system with a built-in Persistence Manager for Angular.
+It allows you to use Angular factories as entities, and provides a way to dynamically define "hooks" between them.
 
 
 ## Table of contents:
@@ -40,7 +40,7 @@ Select and copy the adapter you'd like to use in 'lib/angular-hook-orm/adapters'
 
 For instance, 'PouchDBAdapter.js'.
 
-Download and include any adapter dependencies (PouchDBAdapter requires 'pouchdb' and 'pouchdb-find' version 6.20 +).
+Download and include any adapter dependencies (PouchDBAdapter requires 'pouchdb' and 'pouchdb-find' version 6.2.0 +).
 
 Create a 'HookConfig' factory as seen in the Configuration Template file ('HookConfigTemplate.js'), name it 'HookConfig.js' and place it anywhere in your project, for instance in your 'js/factories' folder and add your configuration details, similar to this:
 

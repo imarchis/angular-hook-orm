@@ -1,4 +1,4 @@
-angular.module('anngular-hook-orm')
+angular.module('angular-hook-orm')
     .factory('HookConfigTemplate', HookConfigTemplate);
 
 function HookConfigTemplate(){

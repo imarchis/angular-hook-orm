@@ -45,14 +45,8 @@ function PouchDBWrapper(JH) {
                     r.indexes.map(function(i){
                         existing.push(i.name);
                     });
-                    if (existing.indexOf('JTPs') == -1) {
-                        DB.index( [_e.table, _e.parents], 'JTPs');
-                    }
                     if (existing.indexOf('JTs') == -1) {
                         DB.index( [_e.table], 'JTs');
-                    }
-                    if (existing.indexOf('JPs') == -1) {
-                        DB.index( [_e.parents], 'JPs');
                     }
                 });
             }
@@ -125,39 +119,6 @@ function PouchDBAdapter(JH) {
         };
         pa.findOne = function(i){
             return _db.get(i);
-        };
-        pa.children = function(id, table = null) {
-            let s = {};
-            s[_e.parents] = {$gt: [], $elemMatch: {$eq : id}};
-            if (table != null) {
-                s[_e.table] = table;
-            }
-            return _db.find({selector: s});
-        };
-        pa.join = function join (name) {
-            var hkn = function hkn () {
-                return name;
-            };
-            var mf = function map (doc, emit) {
-                let join = hkn();
-                let hooks = JSON.parse(doc[_e.hooks]);
-                if (hooks[join] != undefined) {
-                    let rel = doc[_e.relations];
-                    let r = {};
-                    r[_e.key] = rel[join];
-                    emit(r);
-                }
-            };
-            return _db.query(mf, {include_docs : true}).then(function(r) {
-                let objects = [];
-                let key= hkn();
-                r.rows.map(function(a){
-                    objects.push(a.doc);
-                });
-                let results = [];
-                results[key] = JH.extractIfOne(objects);
-                return JH.promise(results);
-            });
         };
         pa.findThese = function(ids) {
             let s = {};

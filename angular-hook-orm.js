@@ -41,14 +41,6 @@ function JH($injector, $q){
                 h.vct[d2>>16&0xff] + h.vct[d2>>24&0xff] +
                 h.vct[d3&0xff] + h.vct[d3>>8&0xff] + h.vct[d3>>16&0xff] +h.vct[d3>>24&0xff];
         };
-        h.findIndex = function findIndex(array, id) {
-            var low = 0, high = array.length, mid;
-            while (low < high) {
-                mid = (low + high) >>> 1;
-                array[mid] != undefined ? array[mid]._id < id ? low = mid + 1 : high = mid :high = mid ;
-            }
-            return low;
-        };
         h.empty = function empty(obj) {
             let k = Object.keys(obj).length;
             let s = JSON.stringify(obj);

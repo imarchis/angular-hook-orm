@@ -206,6 +206,13 @@ angular-hook-orm is designed to offer solutions for interactions that reside bet
 
  ### Adapters
  
+ Adapter are a set of factories that provide interraction between the Entity Manager and your storage solution (Database).
+ They have a serie of specific methods need for manipulating data like: save, update, remove, bulk, findOne, selectAll, findThese etc. and also metods needed to interract with the database like drop, truncate, sync, backup etc.
+ 
+ They are envisioned to be exchangeable, meaning switching between the adapters should not affect the overall normal functionality.
+ 
+ Currently there's only PouchDBAdapter.
+ 
  ### Entity Manager
 
  ### Hooks

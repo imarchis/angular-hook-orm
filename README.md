@@ -10,7 +10,7 @@ Hooks are designed to offer a higher level of freedom for creating interactions 
 
 
 
-##Table of contents:
+#Table of contents:
 - [Get Started](#get-started)
 - [Configuration](#configuration)
  - [Example](#configuration-example)
@@ -21,20 +21,20 @@ Hooks are designed to offer a higher level of freedom for creating interactions 
 - [Todo](#todo)
 
 
-##Get Started:
+#Get Started:
 
-##Configuration:
+#Configuration:
 
-##Documentation:
+#Documentation:
 
-###Hooks
+##Hooks
 
 Hooks are similar to DB joins, only they are not table-based restricted,
 but custom to each individual entity.
 
 Hooks are designed to offer a higher level of freedom for creating interactions between entities.
 
-##Usage:
+#Usage:
 
-##Todo:
+#Todo:
 

@@ -1,23 +1,32 @@
 angular.module('angular-hook-orm', [])
 .factory('JH', ['$injector', '$q', JH])
-.factory('EntitiesManager', ['JH', EntitiesManager]);
+.factory('EntitiesManager', ['JH', EntitiesManager])
+.factory('DatabaseManager', ['JH', DatabaseManager]);
 
 function JH($injector, $q){
     function JH() {
         var h = this;
+        var _d = {};
         h.v = [];
-        h.acquire = function acquire(factoryName) {
+        h.acquire = function acquire(factoryName, hold = false) {
             let obj;
             let ff;
-            try {
-                ff  = $injector.get(factoryName);
-            } catch (e) {
-                throw new Error('No "' + factoryName + '" class available. Cause: ' + "\n\n" + e);
-            }
-            try {
-                obj = $injector.instantiate(ff);
-            } catch (e) {
-                throw new Error('Could not instantiate "'+ factoryName + '" class. ' + "\n\n" + e);
+            if (hold && _d[factoryName] != undefined){
+                obj = _d[factoryName];
+            } else {
+                try {
+                    ff  = $injector.get(factoryName);
+                } catch (e) {
+                    throw new Error('No "' + factoryName + '" class available. Cause: ' + "\n\n" + e);
+                }
+                try {
+                    obj = $injector.instantiate(ff);
+                    if (hold) {
+                        _d[factoryName] = obj;
+                    }
+                } catch (e) {
+                    throw new Error('Could not instantiate "'+ factoryName + '" class. ' + "\n\n" + e);
+                }
             }
             return obj;
         };
@@ -73,6 +82,51 @@ function JH($injector, $q){
     return new JH;
 }
 
+function DatabaseManager(JH) {
+    function DatabaseManager() {
+        var dbm = this;
+        var DBW;
+        var _c;
+        (function () {
+            console.log('started Database Manager');
+            _c = JH.acquire('HookConfig', true);
+            let DBA = JH.acquire(_c.adapter, true);
+            DBW = DBA.getWrapper();
+        })();
+        dbm.connect = function connect() {
+            return DBW.connect();
+        };
+        dbm.status = function status() {
+            return DBW.status();
+        };
+        dbm.backup = function backup() {
+            return DBW.backup();
+        };
+        dbm.restore = function restore() {
+            return DBW.restore();
+        };
+        dbm.sync = function sync() {
+            return DBW.sync();
+        };
+        dbm.drop = function drop() {
+            return DBW.drop();
+        };
+        dbm.empty = function empty() {
+            return DBW.empty();
+        };
+        dbm.createIndex = function createIndex(i) {
+            return DBW.createIndex(i);
+        };
+        dbm.indexes = function indexes() {
+            return DBW.indexes();
+        };
+        dbm.close = function close() {
+            return DBW.close();
+        };
+    }
+    return new DatabaseManager;
+}
+
 function EntitiesManager(JH) {
     function EntitiesManager() {
         var em = this;
@@ -84,80 +138,74 @@ function EntitiesManager(JH) {
         var _e;
         var _q = [];
         (function () {
-            _c = JH.acquire('HookConfig');
-            DBA = JH.acquire(_c.adapter);
-            _e = _c.entities;
             console.log('started Entity Manager');
+            _c = JH.acquire('HookConfig', true);
+            DBA = JH.acquire(_c.adapter, true);
+            _e = _c.entities;
         })();
+        /* Queueing System Methods */
+        var ready = function ready() {
+            let defer = JH.defer();
+            var int = setInterval(function () {
+                if (_q.length === 0) {
+                    clearInterval(int);
+                    defer.resolve(true);
+                }
+            }, 100);
+            return defer.promise;
+        };
+        var que = function que(start) {
+            let defer = JH.defer();
+            var int = setInterval(function () {
+                if (_q[0] === start) {
+                    clearInterval(int);
+                    defer.resolve(true);
+                }
+            }, 100);
+            return defer.promise;
+        };
+        var addQue = function addQue(queID) {
+            _q.push(queID);
+        };
+        var clearQue = function clearQue(queID) {
+            _q.splice(_q.indexOf(queID), 1);
+        };
+        /* Persistence Methods */
         let _clone = function _clone(e) {
             _pc[e._id] = JSON.stringify(e);
         };
-        em.uuid = function uuid() {
-            return JH.uuid();
+        var _stack = function _stack(e) {
+            let ss = JSON.stringify(e);
+            let cs = _pc[e[_e.key]];
+            if (cs !== undefined && cs === ss)  return;
+            _s[e[_e.key]] = ss;
         };
-        em.allInTable = function allInTable(table) {
-            let queID = JH.uuid();
-            addQue(queID);
-            return que(queID).then(function () {
-                return DBA.selectAll(table).then(function (r) {
-                    let picks = [];
-                    r.map(function (ent) {
-                       if(JH.hasProp(_p, ent[_e.key])) {
-                           picks.push(_p[ent[_e.key]]);
-                       } else {
-                           picks.push(_p[ent[_e.key]]);
-                       }
-                    });
-                    clearQue(queID);
-                    return em.convert(r);
-                });
+        var _findPersisted = function _findPersisted(ids) {
+            let picks = [];
+            ids.map(function (id) {
+                let x = ids.indexOf(id);
+                if (JH.hasProp(_p, id)) {
+                    picks.push(_p[id]);
+                    ids.splice(x, 1);
+                }
             });
+            return picks;
         };
-        em.find = function find(i) {
-            let queID = JH.uuid();
-            addQue(queID);
-            return que(queID).then(function () {
-                return DBA.findOne(i).then(function (r) {
-                    clearQue(queID);
-                    return em.convert(r);
-                });
-            });
-        };
-        em.clear = function clear() {
-            _p = {};
-            _pc = {};
-            _s = {};
-        };
-        em.convert = function convert(docs) {
+        /* Data Mapping Methods */
+        var _convert = function _convert(docs) {
             if (docs === undefined) return null;
             let bulk = [];
             docs.map(function (l) {
                 if(JH.hasProp(_p, l[_e.key])) {
                     bulk.push(_p[l[_e.key]]);
                 } else {
-                    let ent = em.entity(l, true);
+                    let ent = _entity(l, true);
                     if (ent != null) {
                         bulk.push(ent);
                     }
                 }
             });
             return JH.promise(bulk);
-        };
-        em.findMany = function findMany(ids) {
-            let links = angular.copy(ids);
-            links = links.constructor === Array ? links : [links];
-            let po = _findPersisted(links);
-            if (links.length > 0) {
-                return DBA.findThese(links).then(function (r) {
-                    return em.convert(r).then(function (x) {
-                        x.map(function (d) {
-                            po.push(d);
-                        });
-                        return JH.promise(JH.extractIfOne(po));
-                    });
-                });
-            }
-            return JH.promise(JH.extractIfOne(po));
         };
         var _revive = function _revive(e) {
             if (!JH.hasProp(e, _e.key)) {
@@ -182,7 +230,7 @@ function EntitiesManager(JH) {
             }
             return e;
         };
-        em.entity = function entity(obj, persist = false) {
+        var _entity = function _entity(obj, persist = false) {
             let keys = Object.keys(obj);
             if (keys.length === 0 || !JH.hasProp(obj, _e.table)) {
                 return null;
@@ -204,30 +252,7 @@ function EntitiesManager(JH) {
                 return entity;
             }
         };
-        em.model = function entity(entity, persist = false) {
-            let keys = Object.keys(entity);
-            if (keys.length === 0 || !JH.hasProp(entity, _e.table)) {
-                return entity;
-            } else {
-                entity = _revive(entity);
-                if (persist) {
-                    _clone(entity);
-                    em.persist(entity);
-                }
-                return entity;
-            }
-        };
-        var _findPersisted = function _findPersisted(ids) {
-            let picks = [];
-            ids.map(function (id) {
-                let x = ids.indexOf(id);
-                if (JH.hasProp(_p, id)) {
-                    picks.push(_p[id]);
-                    ids.splice(x, 1);
-                }
-            });
-            return picks;
-        };
+        /* Hooks Logic Methods */
         var _hook_required = ['reverse', 'type','strict', 'mirror'];
         var _relations = ['o2o', 'o2m', 'm2o', 'm2m'];
         var _reverse = {
@@ -259,88 +284,6 @@ function EntitiesManager(JH) {
             nh.mirror = old.mirror;
             nh.strict = old.strict;
             return nh;
-        };
-        var _grab = function _grab(name) {
-            var subject = this;
-            let rel = _e.relations;
-            let hooks = _e.hooks;
-            let gotHook = !_noHook(subject, name);
-            if (gotHook) {
-                let map = subject[hooks][name];
-                let noRel = _noRel(subject, map.type, name);
-                let lnk = subject[rel][map.type][name];
-                if (!noRel && lnk) {
-                    return em.findMany(lnk);
-                } else {
-                    return JH.promise(null);
-                }
-            }
-            return JH.promise(null);
-        };
-        var ready = function ready() {
-            let defer = JH.defer();
-            var int = setInterval(function () {
-                console.log('check');
-                if (_q.length === 0) {
-                    clearInterval(int);
-                    defer.resolve(true);
-                }
-            }, 100);
-            return defer.promise;
-        };
-        var que = function que(start) {
-            let defer = JH.defer();
-            var int = setInterval(function () {
-                console.log('queuing');
-                if (_q[0] === start) {
-                    clearInterval(int);
-                    defer.resolve(true);
-                }
-            }, 100);
-            return defer.promise;
-        };
-        var addQue = function addQue(queID) {
-            _q.push(queID);
-        };
-        var clearQue = function clearQue(queID) {
-            _q.splice(_q.indexOf(queID), 1);
-        };
-        var _hook = function _hook(name, hook) {
-            var subject = this;
-            let hooks = _e.hooks;
-            let exists = _noHook(subject, name);
-            if (exists && _validHook(hook)) {
-                this[hooks][name] = hook;
-            }
-        };
-        var _unhook = function _unhook(name) {
-            var subject = this;
-            let gotHook = !_noHook(subject, name);
-            if (gotHook) {
-                let queID = JH.uuid();
-                addQue(queID);
-                que(queID).then(function () {
-                     _clearHook(subject, name, 'drop').then(function () {
-                         _rmHook(subject, name);
-                         clearQue(queID);
-                     });
-                });
-            }
-        };
-        var _emptyHook = function _emptyHook(name) {
-            var subject = this;
-            let gotHook = !_noHook(subject, name);
-            if (gotHook) {
-                let queID = JH.uuid();
-                addQue(queID);
-                que(queID).then(function () {
-                     _clearHook(subject, name, 'empty').then(function () {
-                         let type = subject[_e.hooks][name].type;
-                         _emptyRel(subject, type, name);
-                         clearQue(queID);
-                     });
-                });
-            }
         };
         var _single = function _single(type) {
             return type === 'm2o' || type === 'o2o';
@@ -381,27 +324,6 @@ function EntitiesManager(JH) {
         var _rmHook = function _rmHook(ent, name) {
             let hooks = _e.hooks;
             delete ent[hooks][name];
-        };
-        var _countAssigned = function _countAssigned(name) {
-            var subject = this;
-            let rel = _e.relations;
-            let hooks = _e.hooks;
-            if (_noHook(subject, name)) {
-                return 0;
-            } else {
-                let map = subject[hooks][name];
-                let noRel = _noRel(subject, map.type, name);
-                if (noRel) {
-                    return 0;
-                } else {
-                    let assigned = subject[rel][map.type][name];
-                    if (assigned.constructor === Array) {
-                        return assigned.length;
-                    } else {
-                        return assigned === null ? 0 : 1;
-                    }
-                }
-            }
         };
         var _makeRel = function _makeRel(ent, type, name, id) {
             let rel = _e.relations;
@@ -469,14 +391,6 @@ function EntitiesManager(JH) {
                 return _makeRel(ent, type, name, id);
             }
         };
-        /*
-         * methods = [
-         * 'change', --- when assign different (o2o, m2o only, if m2m or o2m no effect)
-         * 'empty', --- when truncate hook
-         * 'drop', --- when 'unhook'
-         * 'delete' --- when entity is deleted
-         * ];
-         */
         var _clearHook = function _clearHook(ent, name, method) {
             let hooks = _e.hooks;
             let gotHook = !_noHook(ent, name);
@@ -578,6 +492,63 @@ function EntitiesManager(JH) {
             }
             return JH.promise(null);
         };
+        /* Entity Methods */
+        var _grab = function _grab(name) {
+            var subject = this;
+            return ready().then(function () {
+                let rel = _e.relations;
+                let hooks = _e.hooks;
+                let gotHook = !_noHook(subject, name);
+                if (gotHook) {
+                    let map = subject[hooks][name];
+                    let noRel = _noRel(subject, map.type, name);
+                    let lnk = subject[rel][map.type][name];
+                    if (!noRel && lnk) {
+                        return em.findMany(lnk);
+                    } else {
+                        return JH.promise(null);
+                    }
+                }
+                return JH.promise(null);
+            });
+        };
+        var _hook = function _hook(name, hook) {
+            var subject = this;
+            let hooks = _e.hooks;
+            let exists = _noHook(subject, name);
+            if (exists && _validHook(hook)) {
+                this[hooks][name] = hook;
+            }
+        };
+        var _unhook = function _unhook(name) {
+            var subject = this;
+            let gotHook = !_noHook(subject, name);
+            if (gotHook) {
+                let queID = JH.uuid();
+                addQue(queID);
+                que(queID).then(function () {
+                    _clearHook(subject, name, 'drop').then(function () {
+                        _rmHook(subject, name);
+                        clearQue(queID);
+                    });
+                });
+            }
+        };
+        var _emptyHook = function _emptyHook(name) {
+            var subject = this;
+            let gotHook = !_noHook(subject, name);
+            if (gotHook) {
+                let queID = JH.uuid();
+                addQue(queID);
+                que(queID).then(function () {
+                    _clearHook(subject, name, 'empty').then(function () {
+                        let type = subject[_e.hooks][name].type;
+                        _emptyRel(subject, type, name);
+                        clearQue(queID);
+                    });
+                });
+            }
+        };
         var _assign = function _assign(name, ent){
             var subject = this;
             let queID = JH.uuid();
@@ -588,9 +559,96 @@ function EntitiesManager(JH) {
                 });
             });
         };
+        var _countAssigned = function _countAssigned(name) {
+            var subject = this;
+            let rel = _e.relations;
+            let hooks = _e.hooks;
+            if (_noHook(subject, name)) {
+                return 0;
+            } else {
+                let map = subject[hooks][name];
+                let noRel = _noRel(subject, map.type, name);
+                if (noRel) {
+                    return 0;
+                } else {
+                    let assigned = subject[rel][map.type][name];
+                    if (assigned.constructor === Array) {
+                        return assigned.length;
+                    } else {
+                        return assigned === null ? 0 : 1;
+                    }
+                }
+            }
+        };
+        /* Public Methods */
+        em.uuid = function uuid() {
+            return JH.uuid();
+        };
+        em.allInTable = function allInTable(table) {
+            let queID = JH.uuid();
+            addQue(queID);
+            return que(queID).then(function () {
+                return DBA.selectAll(table).then(function (r) {
+                    let picks = [];
+                    r.map(function (ent) {
+                        if(JH.hasProp(_p, ent[_e.key])) {
+                            picks.push(_p[ent[_e.key]]);
+                        } else {
+                            picks.push(_p[ent[_e.key]]);
+                        }
+                    });
+                    clearQue(queID);
+                    return _convert(r);
+                });
+            });
+        };
+        em.find = function find(i) {
+            let queID = JH.uuid();
+            addQue(queID);
+            return que(queID).then(function () {
+                return DBA.findOne(i).then(function (r) {
+                    clearQue(queID);
+                    return _convert(r);
+                });
+            });
+        };
+        em.findMany = function findMany(ids) {
+            let links = angular.copy(ids);
+            links = links.constructor === Array ? links : [links];
+            let po = _findPersisted(links);
+            if (links.length > 0) {
+                return DBA.findThese(links).then(function (r) {
+                    return _convert(r).then(function (x) {
+                        x.map(function (d) {
+                            po.push(d);
+                        });
+                        return JH.promise(JH.extractIfOne(po));
+                    });
+                });
+            }
+            return JH.promise(JH.extractIfOne(po));
+        };
+        em.model = function model(entity, persist = false) {
+            let keys = Object.keys(entity);
+            if (keys.length === 0 || !JH.hasProp(entity, _e.table)) {
+                return entity;
+            } else {
+                entity = _revive(entity);
+                if (persist) {
+                    _clone(entity);
+                    em.persist(entity);
+                }
+                return entity;
+            }
+        };
         em.getRepository = function getRepository(t) {
             if (!t) return null;
             return JH.acquire(t.sentenceCase() + _c.repo.suffix);
+        };
+        em.persist = function persist(e) {
+            if (!JH.hasProp(_p, e[_e.key])) {
+                _p[e[_e.key]] = e;
+            }
         };
         em.remove = function remove(e) {
             e[_e.deleted] = true;
@@ -598,7 +656,6 @@ function EntitiesManager(JH) {
             addQue(queID);
             que(queID).then(function () {
                 let hooks = e[_e.hooks];
-                console.log(hooks);
                 Object.keys(hooks).map(function (name) {
                     let queHookID = JH.uuid();
                     addQue(queHookID);
@@ -614,17 +671,6 @@ function EntitiesManager(JH) {
                 clearQue(queID);
             });
         };
-        em.stack = function stack(e) {
-            let ss = JSON.stringify(e);
-            let cs = _pc[e[_e.key]];
-            if (cs !== undefined && cs === ss)  return;
-            _s[e[_e.key]] = ss;
-        };
-        em.persist = function persist(e) {
-            if (!JH.hasProp(_p, e[_e.key])) {
-                _p[e[_e.key]] = e;
-            }
-        };
         em.flush = function flush() {
             return ready().then(function () {
                 let b = [];
@@ -632,7 +678,7 @@ function EntitiesManager(JH) {
                     for (var p in _p) {
                         if (!_p.hasOwnProperty(p)) continue;
                         _p[p] = _prepare(_p[p]);
-                        em.stack(_p[p]);
+                        _stack(_p[p]);
                     }
                 }
                 if (!JH.empty(_s)) {
@@ -647,9 +693,11 @@ function EntitiesManager(JH) {
                 return JH.promise(null);
             });
         };
-        em.truncate = function () {
-            return DBA.truncate();
-        }
+        em.clear = function clear() {
+            _p = {};
+            _pc = {};
+            _s = {};
+        };
     }
     return new EntitiesManager;
 }

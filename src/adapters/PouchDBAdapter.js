@@ -10,63 +10,85 @@ function PouchDBWrapper(JH) {
         var _c;
         var _d;
         var _e;
+        var _cfg;
+        var ndxs = [];
 
-        DB.getDB = function () {
-            return _db;
-        };
-        DB.indexes = function () {
-            return _db.getIndexes();
-        };
-        DB.index = function (f, n, d = null, t = 'json') {
-            if (JH.empty(f)) return false;
-            let i = {fields: f};
-            if (n) if (!d) {d = n;} i.name = n; i.ddoc = d;
-            if (t) i.type = t;
-            return _db.createIndex({index:i});
-        };
-        DB.status = function () {
-            return _db.info();
-        };
         (function () {
-            let config = JH.acquire('HookConfig');
-            _c = config.connections;
-            _e = config.entities;
-            _d = config.database;
-            let debug = config.db_debug;
+            _cfg = JH.acquire('HookConfig', true);
+            _c = _cfg.connections;
+            _e = _cfg.entities;
+            _d = _cfg.database;
+        })();
+        var _checkIndexes = function _checkIndexes () {
+            DB.indexes().then(function(r){
+                r.indexes.map(function(i){
+                    ndxs.push(i.name);
+                });
+                if (ndxs.indexOf('JTs') == -1) {
+                    _index( [_e.table], 'JTs');
+                }
+            });
+        };
+        DB.debugging = function debugging() {
+            let debug = _cfg.db_debug;
             if (debug) {
                 PouchDB.debug.enable(debug);
             } else {
                 PouchDB.debug.disable();
             }
+        };
+        DB.connect = function connect() {
+            if (!_d) return;
             _db = new PouchDB(_d);
             if (_db) {
-                var existing = [];
-                DB.indexes().then(function(r){
-                    r.indexes.map(function(i){
-                        existing.push(i.name);
-                    });
-                    if (existing.indexOf('JTs') == -1) {
-                        DB.index( [_e.table], 'JTs');
-                    }
-                });
+                if (ndxs.length == 0) {
+                    _checkIndexes();
+                }
             }
-        })();
+        };
+        DB.getDB = function getDB () {
+            if (!_db) return false;
+            return _db;
+        };
+        DB.indexes = function () {
+            if (!_db) return false;
+            return _db.getIndexes();
+        };
+        DB.createIndex = function (i) {
+            if (!_db) return false;
+            return _db.createIndex({index:i});
+        };
+        var _index = function _index(f, n, d = null, t = 'json') {
+            if (JH.empty(f)) return false;
+            let i = {fields: f};
+            if (n) if (!d) {d = n;} i.name = n; i.ddoc = d;
+            if (t) i.type = t;
+            return DB.createIndex(i);
+        };
+        DB.status = function () {
+            if (!_db) return false;
+            return _db.info();
+        };
         DB.backup = function () {
+            if (!_db || !_c) return false;
             let bDB = _c.backupDB;
-            if (!_c || !bDB) return false;
+            if (!bDB) return false;
             return _db.replicate.to(bDB.path, bDB.options);
         };
         DB.restore = function () {
+            if (!_db || !_c) return false;
             let bDB = _c.backupDB;
-            if (!_c || !bDB) return false;
+            if (!bDB) return false;
             return _db.replicate.from(bDB.path, bDB.options);
         };
         DB.sync = function () {
+            if (!_db || !_c) return false;
             let sDB = _c.backupDB;
-            if (!_c || !sDB) return false;
+            if (!sDB) return false;
             return _db.sync(sDB.path, sDB.options);
         };
         DB.drop = function () {
+            if (!_db || !_c) return false;
             if (_c.backup_on_destroy) {
                 return DB.backup().then(function() {
                     return _db.destroy();
@@ -76,6 +98,7 @@ function PouchDBWrapper(JH) {
             }
         };
         DB.empty = function () {
+            if (!_db) return false;
             let s = {};
             s[_e.table] = {$gt: null};
             return _db.find({selector: s}).then(function(r){
@@ -87,6 +110,7 @@ function PouchDBWrapper(JH) {
             });
         };
         DB.close = function () {
+            if (!_db) return false;
             return _db.close();
         };
     }
@@ -96,18 +120,22 @@ function PouchDBWrapper(JH) {
 function PouchDBAdapter(JH) {
     function PouchDBAdapter() {
         var pa = this;
-        var DBP;
+        var DBW;
         var _db;
         var _c;
         var _e;
 
         (function() {
-            DBP = JH.acquire('PouchDBWrapper');
-            _db = DBP.getDB();
-            _c = JH.acquire('HookConfig');
+            DBW = JH.acquire('PouchDBWrapper');
+            DBW.connect();
+            _db = DBW.getDB();
+            _c = JH.acquire('HookConfig', true);
             _e = _c.entities;
             console.log('started PouchDB Adapter');
         })();
+        pa.getWrapper = function getWrapper() {
+            return DBW;
+        };
         pa.selectAll = function (table) {
             let s = {};
             s[_e.table] = {$eq: table};

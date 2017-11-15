@@ -11,6 +11,17 @@ It allows you to use Angular factories as entities, and provides a way to dynami
 - [Documentation](#documentation)
   - [Adapters](#adapters)
   - [Entity Manager](#entity-manager)
+    - [.model](#model)
+    - [.persist](#persist)
+    - [.remove](#remove)
+    - [.clear](#clear)
+    - [.flush](#flush)
+    - [.getRepository](#getrepository)
+    - [.allInTable](#allintable)
+    - [.find](#find)
+    - [.findMany](#findmany)
+    - [.queryBuilder](#querybuilder)
+    - [.uuid](#uuid)
   - [Hooks](#hooks)
   - [Entities and Repositories](#entities-and-repositories)
   - [Query Builder](#query-builder)
@@ -193,6 +204,47 @@ angular-hook-orm is designed to offer solutions for interactions that reside bet
  
  ### Entity Manager
 
+   #### model
+```javascript 
+  em.model(obj)
+```
+   #### persist
+```javascript 
+  em.persist(entity)
+```
+   #### remove
+```javascript 
+  em.remove(entity)
+```
+   #### clear
+```javascript 
+  em.clear()
+```
+   #### flush
+```javascript 
+  em.flush()
+```
+   #### getRepository 
+```javascript 
+  em.getRepository('table')
+```
+   #### allInTable
+```javascript 
+  em.allInTable('table')
+```
+   #### find
+```javascript 
+  em.find(id)
+```
+   #### findMany
+```javascript 
+  em.findMany([id1, id2, ...])
+```
+   #### queryBuilder
+
+   
+   
+   
  ### Hooks
 
  Hooks are similar to DB joins, only they are not table-based restricted,

@@ -165,38 +165,16 @@ function HookConfigTemplate(){
 
 A basic web application generally has the following layers:
 
-- Storage Layer
-
-    Storage - DB
-
-- Data Access Layer
-
-    Storage Wrapper
-
-    Transactions Adapter 
-
-- Data Mapper Layer
-
-    Persistence Manager 
-
-- Domain Objects Layer
-
-    Data Helpers - Repositories
-
-    Data Models - Entities
-
-- Service Layer
-
-    Services 
-
-    Controllers 
-
-- Presentation Layer
-
-    Views - Directives, Templates
-
-    UI/UX - Pages, CSS
-
+```javascript
+  webapp.layers = {
+    "Storage Layer" : "Storage - DB",
+    "Data Access Layer" : ["Storage Wrapper", "Transactions Adapter"],
+    "Data Mapper Layer" : "Persistence Manager",
+    "Domain Objects Layer" : ["Data Helpers - Repositories", "Data Models - Entities"],
+    "Service Layer" : ["Services", "Controllers"],
+    "Presentation Layer" : ["Views", "Directives", "Templates", "Pages"]
+  }
+```
 angular-hook-orm is designed to offer solutions for interactions that reside between the Service layer and the Storage layer: 
  - it offers exchangeable solutions for the Data Access Layer, in the form of "Adapters";
  - it has a built in "Entity Manager" which is a solution for the Data Mapper Layer;
@@ -223,7 +201,7 @@ angular-hook-orm is designed to offer solutions for interactions that reside bet
  Hooks are designed to offer a higher level of freedom for creating interactions between entities.
  
  As seen in the example, this is how you define and assign a hook:
- ```javascript
+```javascript
     ...
     list1.hook('bro', {
         type: 'o2o',
@@ -238,7 +216,8 @@ angular-hook-orm is designed to offer solutions for interactions that reside bet
 To define a hook you need:
  - a hook name - anything that make sense to your app's logic ("bro" in the example above);
  - details about the hook functionality;
-  ```javascript
+
+```javascript
   {
     // The type of relation o2o, o2m, m2o, m2m [one-to-one, one-to-many, many-to-one, many-to-many] 
     type: 'o2o',
@@ -272,7 +251,7 @@ To define a hook you need:
           onEmpty: 'abandon'
       };
   //  else 
-      'vanish'
+      action = 'vanish'
 ```
 The Cascades values:
 - 'destroy' - remove both this entity and all related entities.

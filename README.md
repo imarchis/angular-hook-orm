@@ -10,6 +10,16 @@ It allows you to use Angular factories as entities, and provides a way to dynami
   - [Configuration Template](#configuration-template)
 - [Documentation](#documentation)
   - [Adapters](#adapters)
+  - [Database Manager](#database-manager)
+    - [.connect](#connect)
+    - [.status](#status)
+    - [.backup](#backup)
+    - [.restore](#restore)
+    - [.sync](#sync)
+    - [.drop](#drop)
+    - [.createIndex](#createindex)
+    - [.indexes](#indexes)
+    - [.close](#close)
   - [Entity Manager](#entity-manager)
     - [.model](#model)
     - [.persist](#persist)
@@ -20,10 +30,15 @@ It allows you to use Angular factories as entities, and provides a way to dynami
     - [.allInTable](#allintable)
     - [.find](#find)
     - [.findMany](#findmany)
-    - [.queryBuilder](#querybuilder)
-    - [.uuid](#uuid)
   - [Hooks](#hooks)
-  - [Entities and Repositories](#entities-and-repositories)
+  - [Entities](#entities)
+    - [.hook](#hook)
+    - [.unhook](#unhook)
+    - [.emptyHook](#emptyhook)
+    - [.assign](#assign)
+    - [.grab](#grab)
+    - [.countAssigned](#countassigned)
+  - [Repositories](#repositories)
   - [Query Builder](#query-builder)
 - [Usage](#usage)
   - [Example](#example)
@@ -201,7 +216,51 @@ angular-hook-orm is designed to offer solutions for interactions that reside bet
  They are envisioned to be exchangeable, meaning switching between the adapters should not affect the overall normal functionality.
  
  Currently there's only PouchDBAdapter.
- 
+  
+ ### Database Manager
+
+   #### connect
+```javascript 
+  dbm.connect()
+```
+   #### status
+```javascript 
+  dbm.status()
+```
+   #### backup
+```javascript 
+  dbm.backup()
+```
+   #### restore
+```javascript 
+  dbm.restore()
+```
+   #### sync
+```javascript 
+  dbm.sync()
+```
+   #### drop 
+```javascript 
+  dbm.drop()
+```
+   #### empty
+```javascript 
+  dbm.empty()
+```
+   #### createIndex
+```javascript 
+  dbm.createIndex(index)
+```
+   #### indexes
+```javascript 
+  dbm.indexes()
+```
+   #### close
+```javascript 
+  dbm.close()
+```   
+
+   
  ### Entity Manager
 
    #### model
@@ -240,9 +299,6 @@ angular-hook-orm is designed to offer solutions for interactions that reside bet
 ```javascript 
   em.findMany([id1, id2, ...])
 ```
-   #### queryBuilder
-
-   
    
    
  ### Hooks
@@ -313,7 +369,37 @@ The Cascades values:
 - 'vanish' - remove the entity's reference
 
 
- ### Entities and Repositories
+ ### Entities 
+ 
+   #### hook
+```javascript 
+  entity.hook('hook_name', details_obj)
+```
+   #### unhook
+```javascript 
+  entity.unhook('hook_name')
+```
+   #### emptyHook
+```javascript 
+  entity.emptyHook('hook_name')
+```
+   #### assign
+```javascript 
+  entity.assign('hook_name', entity2)
+```
+   #### grab
+```javascript 
+  entity.grab('hook_name')
+```
+   #### countAssigned 
+```javascript 
+  entity.countAssigned('hook_name')
+```
+
+ 
+ ### Repositories
+ 
+ 
  
  ### Query Builder
 

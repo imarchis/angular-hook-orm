@@ -11,33 +11,33 @@ It allows you to use Angular factories as entities, and provides a way to dynami
 - [Documentation](#documentation)
   - [Adapters](#adapters)
   - [Database Manager](#database-manager)
-    - [.connect](#connect)
-    - [.status](#status)
-    - [.backup](#backup)
-    - [.restore](#restore)
-    - [.sync](#sync)
-    - [.drop](#drop)
-    - [.createIndex](#createindex)
-    - [.indexes](#indexes)
-    - [.close](#close)
+     - [.connect()](#connect)
+     - [.status()](#status)
+     - [.backup()](#backup)
+     - [.restore()](#restore)
+     - [.sync()](#sync)
+     - [.drop()](#drop)
+     - [.createIndex()](#createindex)
+     - [.indexes()](#indexes)
+     - [.close()](#close)
   - [Entity Manager](#entity-manager)
-    - [.model](#model)
-    - [.persist](#persist)
-    - [.remove](#remove)
-    - [.clear](#clear)
-    - [.flush](#flush)
-    - [.getRepository](#getrepository)
-    - [.allInTable](#allintable)
-    - [.find](#find)
-    - [.findMany](#findmany)
+     - [.model()](#model)
+     - [.persist()](#persist)
+     - [.remove()](#remove)
+     - [.clear()](#clear)
+     - [.flush()](#flush)
+     - [.getRepository()](#getrepository)
+     - [.allInTable()](#allintable)
+     - [.find()](#find)
+     - [.findMany()](#findmany)
   - [Hooks](#hooks)
   - [Entities](#entities)
-    - [.hook](#hook)
-    - [.unhook](#unhook)
-    - [.emptyHook](#emptyhook)
-    - [.assign](#assign)
-    - [.grab](#grab)
-    - [.countAssigned](#countassigned)
+     - [.hook()](#hook)
+     - [.unhook()](#unhook)
+     - [.emptyHook()](#emptyhook)
+     - [.assign()](#assign)
+     - [.grab()](#grab)
+     - [.countAssigned()](#countassigned)
   - [Repositories](#repositories)
   - [Query Builder](#query-builder)
 - [Usage](#usage)
@@ -217,85 +217,85 @@ angular-hook-orm is designed to offer solutions for interactions that reside bet
  
  Currently there's only PouchDBAdapter.
   
- ### Database Manager
+### Database Manager
 
-   #### connect
+   #### connect()
 ```javascript 
   dbm.connect()
 ```
-   #### status
+   #### status()
 ```javascript 
   dbm.status()
 ```
-   #### backup
+   #### backup()
 ```javascript 
   dbm.backup()
 ```
-   #### restore
+   #### restore()
 ```javascript 
   dbm.restore()
 ```
-   #### sync
+   #### sync()
 ```javascript 
   dbm.sync()
 ```
-   #### drop 
+   #### drop()
 ```javascript 
   dbm.drop()
 ```
-   #### empty
+   #### empty()
 ```javascript 
   dbm.empty()
 ```
-   #### createIndex
+   #### createIndex()
 ```javascript 
   dbm.createIndex(index)
 ```
-   #### indexes
+   #### indexes()
 ```javascript 
   dbm.indexes()
 ```
-   #### close
+   #### close()
 ```javascript 
   dbm.close()
 ```   
 
    
- ### Entity Manager
+### Entity Manager
 
-   #### model
+   #### model()
 ```javascript 
   em.model(obj)
 ```
-   #### persist
+   #### persist()
 ```javascript 
   em.persist(entity)
 ```
-   #### remove
+   #### remove()
 ```javascript 
   em.remove(entity)
 ```
-   #### clear
+   #### clear()
 ```javascript 
   em.clear()
 ```
-   #### flush
+   #### flush()
 ```javascript 
   em.flush()
 ```
-   #### getRepository 
+   #### getRepository() 
 ```javascript 
   em.getRepository('table')
 ```
-   #### allInTable
+   #### allInTable()
 ```javascript 
   em.allInTable('table')
 ```
-   #### find
+   #### find()
 ```javascript 
   em.find(id)
 ```
-   #### findMany
+   #### findMany()
 ```javascript 
   em.findMany([id1, id2, ...])
 ```
@@ -371,27 +371,27 @@ The Cascades values:
 
  ### Entities 
  
-   #### hook
+   #### hook()
 ```javascript 
   entity.hook('hook_name', details_obj)
 ```
-   #### unhook
+   #### unhook()
 ```javascript 
   entity.unhook('hook_name')
 ```
-   #### emptyHook
+   #### emptyHook()
 ```javascript 
   entity.emptyHook('hook_name')
 ```
-   #### assign
+   #### assign()
 ```javascript 
   entity.assign('hook_name', entity2)
 ```
-   #### grab
+   #### grab()
 ```javascript 
   entity.grab('hook_name')
 ```
-   #### countAssigned 
+   #### countAssigned() 
 ```javascript 
   entity.countAssigned('hook_name')
 ```

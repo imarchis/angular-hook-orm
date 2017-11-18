@@ -10,6 +10,7 @@ It allows you to use Angular factories as entities, and provides a way to dynami
   - [Configuration Template](#configuration-template)
 - [Documentation](#documentation)
   - [Adapters](#adapters)
+  - [Wrappers](#wrappers)
   - [Database Manager](#database-manager)
      - [.connect()](#connect)
      - [.status()](#status)
@@ -210,102 +211,162 @@ angular-hook-orm is designed to offer solutions for interactions that reside bet
 
  ### Adapters
  
- Adapter are a set of factories that provide interraction between the Entity Manager and your storage solution (Database).
- They have a serie of specific methods need for manipulating data like: save, update, remove, bulk, findOne, selectAll, findThese etc. and also metods needed to interract with the database like drop, truncate, sync, backup etc.
+ Adapters are a set of factories that provide interraction between the Entity Manager and the Database Wrappers, wich communicates with your storage solution (Database).
+ They have a serie of specific methods need for manipulating data like: save, update, remove, bulk, findOne, selectAll, findThese etc which hold the solution specific functionality needed for those methods.
  
  They are envisioned to be exchangeable, meaning switching between the adapters should not affect the overall normal functionality.
  
- Currently there's only PouchDBAdapter.
+ Note: Currently there's only a  PouchDBAdapter implemented.
   
+ ### Wrappers
+ 
+ Wrappers are a set of factories that provide interraction between the Adapters and your storage solution (Database). Think of them as a database interface. They have a serie of specific methods need for interacting with your database like: connect, sync, restore, empty, status, drop etc which hold the solution specific functionality needed for those methods.
+
+ They are envisioned to be exchangeable, meaning switching between the wrappers should not affect the overall normal functionality. They are however strictly (so far) connected to the adapaters
+ 
+Note: Currently there's only a PouchDBWrapper implemented.
+
+
 ### Database Manager
 
+  The Database Manager seeks for the selected Adaptare from the HookCongif factory, from it it gets the Database Wrappper associated, by calling the getWrapper() method of the Adapter.
+  
    #### connect()
+   Used for creating or re-establishing a database connection.
+   
 ```javascript 
   dbm.connect()
 ```
    #### status()
+   Used for getting information / statistics about the database.
+   
 ```javascript 
   dbm.status()
 ```
    #### backup()
+   Used for performing a backup of the databse.
+   
 ```javascript 
   dbm.backup()
 ```
    #### restore()
+   Used for restoring a previously backup of the databse.
+   
 ```javascript 
   dbm.restore()
 ```
    #### sync()
+   Used for triggering a sync process between the database and a server.
+
 ```javascript 
   dbm.sync()
 ```
    #### drop()
+   Used for deleting the entire database. If the "backup_on_destroy" attribute of the datbase configuration details is set to true, it will perform a backup of the dabase before it deletes it.
+   
 ```javascript 
   dbm.drop()
 ```
    #### empty()
+   Used for truncating the database, empty the database without deleting it.
+   
 ```javascript 
   dbm.empty()
 ```
    #### createIndex()
+   Used for creating a database index, for improving the speed of a specific database query.
+   
 ```javascript 
   dbm.createIndex(index)
 ```
    #### indexes()
+   Used for retrieving a list of existing database indexes.
+   
 ```javascript 
   dbm.indexes()
 ```
    #### close()
+   Used for severing the database connection. 
+   
 ```javascript 
   dbm.close()
 ```   
 
    
 ### Entity Manager
+  The Entity Manager is the most important factory of the angular-hook-orm system. 
+  It's offers solutions for:
+   - fetching data from the database;
+   - mapping the data fetched from the database to their designated entities;
+   - saving or removing data into and from the database;
+   - ensures the persistence of the entities;
+   - manages subsequent changes to the entities so that no data is lost (it has a built-in queue system);
+   - bundles the changes and bulk updates the database (sends all the changes at once) for improving performence;
+   - ensures persistent management of both newly created entities and those fetched from the database;
+   - reuses the persisted entities in the search results first and only fetches missing entities from the database.
 
-   #### model()
+  #### model()
+  This method is used create entities out of objects. It assigns (if missing) an universally unique identifier (uuid), it assignes the predefined Entity methods (check the [Entities](#entities) section bellow), and also persists the newly created entity if specified (by default it doesn't).
+  
 ```javascript 
-  em.model(obj)
+  em.model(obj, false)
 ```
    #### persist()
+   This method is used to persist an entity, for the system to keep track of their changes. By persisting an entity records of any of it's changes are kept and will be included (if changed or new) in the next bulk update when the em.flush() method is called.
+   
 ```javascript 
   em.persist(entity)
 ```
    #### remove()
+   This method is used for "marking" an entity as deleted, which will ensure it gets removed from the database on the next flush()
+   
 ```javascript 
   em.remove(entity)
 ```
    #### clear()
+   This method is used for removing all persistence data, including persisted entities from queries. 
+   Note: all entities will have to be [re-persisted](#persist) after this point, for the system to keep track of their changes.
+   
 ```javascript 
   em.clear()
 ```
    #### flush()
+   This method prepares the bundle of recorded changes and saves them to the database via a bulk update.
+   
 ```javascript 
   em.flush()
 ```
    #### getRepository() 
+   This method return a new instance of the Repository for a specified entity (if any defined).
+   
 ```javascript 
   em.getRepository('table')
 ```
    #### allInTable()
+   This method returns all the information found in a specific database table (equivalent of "SELECT * FROM 'table'").
+   
 ```javascript 
   em.allInTable('table')
 ```
    #### find()
+   Given a uuid, it fetches that record (if found) from the (persistence pool or if not found from the) database .
+   
 ```javascript 
   em.find(id)
 ```
-   #### findMany()
+   #### findMany(),
+   Given an array of uuids, it fetches the records (if found) from the (persistence pool or if not found from the) database.
 ```javascript 
   em.findMany([id1, id2, ...])
 ```
    
    
  ### Hooks
+ 
+ Hooks are similar to RDBMS relations, only they are not table-based restricted, but custom to each individual entity.
 
- Hooks are similar to DB joins, only they are not table-based restricted,
- but custom to each individual entity.
-
+ The best way to think of the hooks is to envision them as "personal" relationships of your entites.
+ 
  Hooks are designed to offer a higher level of freedom for creating interactions between entities.
  
  As seen in the example, this is how you define and assign a hook:
@@ -370,34 +431,49 @@ The Cascades values:
 
 
  ### Entities 
- 
+   Entites are objects of your system that have an established identity, meaning they are instances of your objects that also have/will have a record of their data stored in the database.
+   
    #### hook()
+   This method is used to define a "hook" for the entity. (see the [Hooks](#hooks) section above for more details).
+   
 ```javascript 
   entity.hook('hook_name', details_obj)
 ```
    #### unhook()
+   This method is used to remove a pre-defined hook.
+   
 ```javascript 
   entity.unhook('hook_name')
 ```
    #### emptyHook()
+   This method is used for resetting the previously defined associations of this hook.
+   
 ```javascript 
   entity.emptyHook('hook_name')
 ```
    #### assign()
+   This method is used to assign an entity to this pre-defined hook.
+   
 ```javascript 
   entity.assign('hook_name', entity2)
 ```
    #### grab()
+   This method is used for fetching the entities previously assigned to this hook.
+   
 ```javascript 
   entity.grab('hook_name')
 ```
    #### countAssigned() 
+   This method is returns the number of entities currently associated to this hook.
+   
 ```javascript 
   entity.countAssigned('hook_name')
 ```
 
  
  ### Repositories
+ Repositories are factories that are designed to hold custom methods for fetching entities of a specific table.
+ Think of them as the place to save all your entity specific logic, like specific queries or operations.
  
  
  

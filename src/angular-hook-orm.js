@@ -181,15 +181,20 @@ function EntitiesManager(JH) {
             _s[e[_e.key]] = ss;
         };
         var _findPersisted = function _findPersisted(ids) {
-            let picks = [];
-            ids.map(function (id) {
-                let x = ids.indexOf(id);
-                if (JH.hasProp(_p, id)) {
-                    picks.push(_p[id]);
-                    ids.splice(x, 1);
-                }
+            let queID = JH.uuid();
+            addQue(queID);
+            return que(queID).then(function () {
+                let picks = [];
+                ids.map(function (id) {
+                    let x = ids.indexOf(id);
+                    if (JH.hasProp(_p, id)) {
+                        picks.push(_p[id]);
+                        ids.splice(x, 1);
+                    }
+                });
+                clearQue(queID);
+                return picks;
             });
-            return picks;
         };
         /* Data Mapping Methods */
         var _convert = function _convert(docs) {
@@ -218,6 +223,13 @@ function EntitiesManager(JH) {
             e.assign = _assign;
             e.countAssigned = _countAssigned;
             return e;
+        };
+        var _repo = function _revive(r) {
+            r.find = _find;
+            r.findAll = _findAll;
+            r.findBy = _findBy;
+            r.total = _total;
+            return r;
         };
         var _prepare = function _prepare(e) {
             let rel = _e.relations;
@@ -580,6 +592,70 @@ function EntitiesManager(JH) {
                 }
             }
         };
+        /* Repository Methods */
+        var _find = function _find(i) {
+            let queID = JH.uuid();
+            addQue(queID);
+            return que(queID).then(function () {
+                let po = _findPersisted(i);
+                if (po.length == 0) {
+                    return DBA.findOne(i).then(function (r) {
+                        clearQue(queID);
+                        return _convert(r).then(function (x) {
+                            x.map(function (d) {
+                                po.push(d);
+                            });
+                            return JH.promise(JH.extractIfOne(po));
+                        });
+                    });
+                }
+                return JH.promise(JH.extractIfOne(po));
+            });
+        };
+        var _findAll = function _findAll() {
+            var subject = this;
+            let table;
+            if (!JH.hasProp(subject, _e.table)) {
+                table = subject[_e.table];
+            } else {
+                // Todo: finish logic
+                let repo = subject.constructor.name;
+                let entity= repo.replace(_c.repo.suffix, '');
+                table = entity.toLowerCase();
+            }
+            let queID = JH.uuid();
+            addQue(queID);
+            return que(queID).then(function () {
+                return DBA.selectAll(table).then(function (r) {
+                    let picks = [];
+                    r.map(function (ent) {
+                        if(JH.hasProp(_p, ent[_e.key])) {
+                            picks.push(_p[ent[_e.key]]);
+                        } else {
+                            picks.push(_p[ent[_e.key]]);
+                        }
+                    });
+                    clearQue(queID);
+                    return _convert(r);
+                });
+            });
+        };
+        var _findBy = function _findBy(criteria) {
+            var subject = this;
+            let table = subject[_e.table];
+            if (JH.empty(criteria)) {
+                return subject.findAll();
+            } else {
+                // TODO: finish logic.
+                return table;
+            }
+        };
+        var _total = function _total() {
+            var subject = this;
+            let table = subject[_e.table];
+            // TODO: finish logic.
+            return 0;
+        };
         /* Public Methods */
         em.uuid = function uuid() {
             return JH.uuid();
@@ -606,10 +682,19 @@ function EntitiesManager(JH) {
             let queID = JH.uuid();
             addQue(queID);
             return que(queID).then(function () {
-                return DBA.findOne(i).then(function (r) {
-                    clearQue(queID);
-                    return _convert(r);
-                });
+                let po = _findPersisted(i);
+                if (po.length == 0) {
+                    return DBA.findOne(i).then(function (r) {
+                        clearQue(queID);
+                        return _convert(r).then(function (x) {
+                            x.map(function (d) {
+                                po.push(d);
+                            });
+                            return JH.promise(JH.extractIfOne(po));
+                        });
+                    });
+                }
+                return JH.promise(JH.extractIfOne(po));
             });
         };
         em.findMany = function findMany(ids) {
@@ -643,7 +728,9 @@ function EntitiesManager(JH) {
         };
         em.getRepository = function getRepository(t) {
             if (!t) return null;
-            return JH.acquire(t.sentenceCase() + _c.repo.suffix);
+            let r = JH.acquire(t.sentenceCase() + _c.repo.suffix);
+            r = _repo(r);
+            return r;
         };
         em.persist = function persist(e) {
             if (!JH.hasProp(_p, e[_e.key])) {
@@ -694,9 +781,14 @@ function EntitiesManager(JH) {
             });
         };
         em.clear = function clear() {
-            _p = {};
-            _pc = {};
-            _s = {};
+            let queID = JH.uuid();
+            addQue(queID);
+            que(queID).then(function () {
+                _p = {};
+                _pc = {};
+                _s = {};
+                clearQue(queID);
+            });
         };
     }
     return new EntitiesManager;

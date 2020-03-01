@@ -273,7 +273,7 @@ function EntitiesManager(JH) {
                 return entity;
             }
         };
-        em.model = function entity(entity, persist = false) {
+        em.model = function model(entity, persist = false) {
             let keys = Object.keys(entity);
             if (keys.length === 0 || !JH.hasProp(entity, _e.table)) {
                 return null;
@@ -640,12 +640,12 @@ function EntitiesManager(JH) {
             let key = _e.key;
             if (!JH.hasProp(ent, key)) {
                 throw new Error(
-                    'Association Entity is invalid: Missing primary UUID key "'+ key + '"'
+                    'Association Entity is invalid: Missing primary UUID key "' + key + '"'
                 );
             }
             if (!JH.hasProp(subject, key)) {
                 throw new Error(
-                    'Current Entity is invalid: Missing primary UUID key "'+ key + '"'
+                    'Current Entity is invalid: Missing primary UUID key "' + key + '"'
                 );
             }
             if (JH.hasProp(subject[hooks], name)) {
@@ -655,7 +655,7 @@ function EntitiesManager(JH) {
                     if (map.table !== ent[table]) {
                         throw new Error(
                             'Hook "strict" restriction violated: ' +
-                            'Entity must be from "'+ map.table +'" table only.'
+                            'Entity must be from "' + map.table + '" table only.'
                         );
                     }
                 }
